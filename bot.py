@@ -1,5 +1,8 @@
+import os
 import html
 import json
+import threading
+from flask import Flask
 from telegram import (Bot, Update, LabeledPrice,
     InlineKeyboardButton, InlineKeyboardMarkup)
 from telegram.ext import (Application, CommandHandler,
@@ -7,7 +10,7 @@ from telegram.ext import (Application, CommandHandler,
     MessageHandler, filters)
 from telegram.error import TelegramError
 
-MASTER_TOKEN = "9005386593:AAEtCP4gVQtNn0TROdBUtpL33FS8uk47ZXM"
+MASTER_TOKEN = os.environ.get("MASTER_TOKEN", "9005386593:AAEtCP4gVQtNn0TROdBUtpL33FS8uk47ZXM")
 DB = "bots.json"
 running = {}
 
@@ -389,4 +392,19 @@ master = (Application.builder().token(MASTER_TOKEN)
 master.bot_data["master"] = True
 add_handlers(master)
 master.add_handler(CommandHandler("testnotify", testnotify))
-master.run_polling()
+
+# Render health-check server for UptimeRobot
+health_app = Flask(__name__)
+
+@health_app.route("/")
+@health_app.route("/health")
+def health():
+    return "OK", 200
+
+def _run_health():
+    port = int(os.environ.get("PORT", 10000))
+    health_app.run(host="0.0.0.0", port=port)
+
+if __name__ == "__main__":
+    threading.Thread(target=_run_health, daemon=True).start()
+    master.run_polling()
