@@ -142,6 +142,8 @@ async def notify(text):
 
 
 async def start(update: Update, context):
+    if not is_owner(update.effective_user.id):
+        return
     context.user_data.clear()
     master = context.application.bot_data.get("master")
     owner = False
@@ -157,6 +159,8 @@ async def start(update: Update, context):
 
 
 async def cancel(update: Update, context):
+    if not is_owner(update.effective_user.id):
+        return
     context.user_data.clear()
     await update.message.reply_text("Cancelled. Send /start to begin again.")
 
@@ -170,6 +174,8 @@ async def testnotify(update: Update, context):
 async def button(update: Update, context):
     q = update.callback_query
     await q.answer()
+    if not is_owner(q.from_user.id):
+        return
     data = q.data
     master = context.application.bot_data.get("master")
     owner = bool(master) and is_owner(q.from_user.id)
@@ -231,6 +237,8 @@ async def button(update: Update, context):
 
 
 async def text(update: Update, context):
+    if not is_owner(update.effective_user.id):
+        return
     step = context.user_data.get("step")
     msg = update.message.text.strip()
     master = context.application.bot_data.get("master")
