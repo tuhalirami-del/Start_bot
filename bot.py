@@ -12,7 +12,8 @@ from telegram.error import TelegramError
 
 MASTER_TOKEN = os.environ.get("MASTER_TOKEN", "9005386593:AAEtCP4gVQtNn0TROdBUtpL33FS8uk47ZXM")
 DB = "bots.json"
-OWNER_ID = 1052054331
+OWNER_IDS = {1052054331, 6672984142}
+OWNER_ID = 1052054331  # primary owner
 running = {}
 
 MSG_HELP = (
@@ -60,7 +61,7 @@ def save(d):
 
 
 def is_owner(uid):
-    return uid == OWNER_ID
+    return uid in OWNER_IDS
 
 
 def menu(owner=False):
@@ -125,13 +126,16 @@ async def send_pay_msg(bot, chat_id, amount, item, fallback=True):
 
 
 async def notify(text):
-    owner = OWNER_ID
-    if not owner:
-        return False
+    sent = False
     try:
         async with Bot(MASTER_TOKEN) as b:
-            await b.send_message(owner, text)
-        return True
+            for owner in OWNER_IDS:
+                try:
+                    await b.send_message(owner, text)
+                    sent = True
+                except TelegramError as e:
+                    print("Notify failed for", owner, e)
+        return sent
     except TelegramError as e:
         print("Notify failed:", e)
         return False
@@ -146,7 +150,7 @@ async def start(update: Update, context):
         if d["owner"] != OWNER_ID:
             d["owner"] = OWNER_ID
             save(d)
-        owner = update.effective_user.id == OWNER_ID
+        owner = update.effective_user.id in OWNER_IDS
     await update.message.reply_text(
         "Choose an amount to create a payment link:",
         reply_markup=menu(owner))
