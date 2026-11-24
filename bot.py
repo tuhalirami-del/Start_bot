@@ -145,17 +145,15 @@ async def start(update: Update, context):
     if not is_owner(update.effective_user.id):
         return
     context.user_data.clear()
-    master = context.application.bot_data.get("master")
-    owner = False
-    if master:
-        d = load()
-        if d["owner"] != OWNER_ID:
-            d["owner"] = OWNER_ID
-            save(d)
-        owner = update.effective_user.id in OWNER_IDS
+    d = load()
+    if d["owner"] != OWNER_ID:
+        d["owner"] = OWNER_ID
+        save(d)
+    
+    # Ab har bot (master ya child) mein owner ko full menu milega
     await update.message.reply_text(
         "Choose an amount to create a payment link:",
-        reply_markup=menu(owner))
+        reply_markup=menu(True))
 
 
 async def cancel(update: Update, context):
@@ -177,8 +175,7 @@ async def button(update: Update, context):
     if not is_owner(q.from_user.id):
         return
     data = q.data
-    master = context.application.bot_data.get("master")
-    owner = bool(master) and is_owner(q.from_user.id)
+    owner = True  # Owner check pass ho gaya hai upar
 
     if data == "custom":
         context.user_data["step"] = "amount"
@@ -241,8 +238,7 @@ async def text(update: Update, context):
         return
     step = context.user_data.get("step")
     msg = update.message.text.strip()
-    master = context.application.bot_data.get("master")
-    owner = bool(master) and is_owner(update.effective_user.id)
+    owner = True  # Owner check pass ho gaya hai upar
 
     if step == "token" and owner:
         try:
